@@ -11,5 +11,19 @@ def index(id):
         'customer': customer.name
     })
 
+@app.route('/create', methods=['POST'])
+def create_customer():
+    data = request.get_json()
+
+    customer = Customer(name=data['name'])
+
+    db.session.add(customer)
+    db.session.commit()
+
+    return jsonify({
+        'success': True,
+        'Customer': customer.name
+    })
+
 
 
