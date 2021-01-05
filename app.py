@@ -1,4 +1,4 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 from models import app, db, Customer
 
 @app.route('/<int:id>')
