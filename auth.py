@@ -41,7 +41,7 @@ def get_token_auth_header():
     if not auth:
         raise AuthError({
             'code': 'authorization header missing',
-            'description': 'Authorization header is expected'
+            'description': 'Authorization header is expected',
         }, 401)
 
     # split authorization into 2 parts

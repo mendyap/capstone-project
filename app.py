@@ -19,6 +19,9 @@ def index(id):
 def get_customers():
     customers = Customer.query.all()
 
+    if customers is None:
+        abort(404)
+
     customer_list = []
 
     for customer in customers:
@@ -26,6 +29,7 @@ def get_customers():
 
     return jsonify({
         'success': True,
+        'status_code': 200,
         'customers': customer_list
     })
 
@@ -37,20 +41,27 @@ def create_customer():
     data = request.get_json()
     today = date.today()
 
-    if not data['name'] or not data['email']:
-        abort(404)
+    if (data['name'] is None) or (data['email'] is None):
+        abort(400)
 
     customer = Customer(name=data['name'],
                         email=data['email'], join_date=today)
 
-    db.session.add(customer)
-    db.session.commit()
+    try:
+        db.session.add(customer)
+        db.session.commit()
+    except Exception as exc:
+        db.session.rollback()
+        print('Exception:', exc)
+        abort(422)
 
     new_customer = Customer.query.filter_by(name=data['name']).one_or_none()
-    print('Customer:', new_customer)
+    if new_customer is None:
+        abort(422)
 
     return jsonify({
         'success': True,
+        'status_code': 200,
         'Customer': new_customer.name
     })
 
@@ -61,9 +72,11 @@ def update_customer(id):
     data = request.get_json()
 
     customer = Customer.query.filter_by(id=id).one_or_none()
+    if customer is None:
+        abort(404)
 
     if not data['name'] and not data['email']:
-        abort(404)
+        abort(400)
 
     if data['name']:
         customer.name = data['name']
@@ -71,12 +84,20 @@ def update_customer(id):
     if data['email']:
         customer.email = data['email']
 
+    try:
         db.session.commit()
+    except Exception as exc:
+        db.session.rollback()
+        print('Exception:', exc)
+        abort(422)
 
-        updated_customer = Customer.query.filter_by(id=id).one_or_none()
+    updated_customer = Customer.query.filter_by(id=id).one_or_none()
+    if updated_customer is None:
+        abort(422)
 
     return jsonify({
         'success': True,
+        'status_code': 200,
         'customer_name': updated_customer.name,
         'customer_email': updated_customer.email
     })
@@ -86,10 +107,18 @@ def update_customer(id):
 @requires_auth('delete:customer')
 def delete_customer(id):
     customer = Customer.query.filter_by(id=id).one_or_none()
+    if customer is None:
+        abort(404)
+
     deleted_name = customer.name
 
-    db.session.delete(customer)
-    db.session.commit()
+    try:
+        db.session.delete(customer)
+        db.session.commit()
+    except Exception as exc:
+        db.session.rollback()
+        print('Exception:', exc)
+        abort(422)
 
     customers = customer.query.all()
 
@@ -107,6 +136,9 @@ def delete_customer(id):
 def get_items():
     items = Item.query.all()
 
+    if items is None:
+        abort(404)
+
     item_list = []
 
     for item in items:
@@ -114,6 +146,7 @@ def get_items():
 
     return jsonify({
         'success': True,
+        'status_code': 200,
         'items': item_list
     })
 
@@ -125,19 +158,23 @@ def create_item():
     data = request.get_json()
 
     if not data['name'] or not data['brand'] or not data['price']:
-        abort(404)
+        abort(400)
 
     item = Item(name=data['name'],
                 brand=data['brand'], price=data['price'])
 
-    db.session.add(item)
-    db.session.commit()
-
-    new_item = Item.query.filter_by(name=data['name']).one_or_none()
+    try:
+        db.session.add(item)
+        db.session.commit()
+    except Exception as exc:
+        db.session.rollback()
+        print('Exception:', exc)
+        abort(422)
 
     return jsonify({
         'success': True,
-        'Item': new_item.name
+        'status_code': 200,
+        'Item': data['name']
     })
 
 
@@ -147,9 +184,11 @@ def update_item(id):
     data = request.get_json()
 
     item = Item.query.filter_by(id=id).one_or_none()
+    if item is None:
+        abort(404)
 
     if not data['name'] and not data['brand'] and not data['price']:
-        abort(404)
+        abort(400)
 
     if data['name']:
         item.name = data['name']
@@ -159,13 +198,18 @@ def update_item(id):
 
     if data['brand']:
         item.price = data['price']
-
+    try:
         db.session.commit()
+    except Exception as exc:
+        db.session.rollback()
+        print('Exception:', exc)
+        abort(422)
 
-        updated_item = Item.query.filter_by(id=id).one_or_none()
+    updated_item = Item.query.filter_by(id=id).one_or_none()
 
     return jsonify({
         'success': True,
+        'status_code': 200,
         'item_name': updated_item.name,
         'item_brand': updated_item.brand,
         'item_price': updated_item.price
@@ -176,15 +220,24 @@ def update_item(id):
 @requires_auth('delete:item')
 def delete_Item(id):
     item = Item.query.filter_by(id=id).one_or_none()
-    deleted_name = Item.name
+    if item is None:
+        abort(404)
 
-    db.session.delete(item)
-    db.session.commit()
+    deleted_name = item.name
+
+    try:
+        db.session.delete(item)
+        db.session.commit()
+    except Exception as exc:
+        db.session.rollback()
+        print('Exception:', exc)
+        abort(422)
 
     items = Item.query.all()
 
     return jsonify({
         'success': True,
+        'status_code': 200,
         'deleted_item': deleted_name,
         'num_of_remaining_items': len(items)
     })
@@ -196,6 +249,8 @@ def delete_Item(id):
 @requires_auth('get:orders')
 def get_orders():
     orders = Orders.query.all()
+    if orders is None:
+        abort(404)
 
     orders_list = []
 
@@ -205,6 +260,7 @@ def get_orders():
 
     return jsonify({
         'success': True,
+        'status_code': 200,
         'orders_list': orders_list,
         'num_of_orders': len(orders)
     })
@@ -216,22 +272,29 @@ def submit_order():
     data = request.get_json()
 
     item = Item.query.filter_by(id=data['item_id']).one_or_none()
+    if item is None:
+        abort(404)
 
     if item.available == False:
-        abort(422, 'Item not available')
+        abort(422, 'item not available')
 
     today = date.today()
     total_price = item.price * data['quantity']
-    print('TOTAL:', total_price)
 
     order = Orders(order_date=today, customer_id=data['customer_id'],
                    item_id=data['item_id'], quantity=data['quantity'], amount_due=total_price)
-
-    db.session.add(order)
-    db.session.commit()
+                   
+    try:
+        db.session.add(order)
+        db.session.commit()
+    except Exception as exc:
+        db.session.rollback()
+        print('Exception:', exc)
+        abort(422)
 
     return ({
-        'success': True
+        'success': True,
+        'status_code': 200 
     })
 
 
@@ -239,13 +302,20 @@ def submit_order():
 @requires_auth('delete:order')
 def delete_order(id):
     order = Orders.query.filter_by(id=id).one_or_none()
+    if order is None:
+        abort(404)
 
     orders = Orders.query.all()
 
     previous_num_of_orders = len(orders)
 
-    db.session.delete(order)
-    db.session.commit()
+    try:
+        db.session.delete(order)
+        db.session.commit()
+    except Exception as exc:
+        db.session.rollback()
+        print('Exception:', exc)
+        abort(422)
 
     current_orders = Orders.query.all()
 
@@ -261,3 +331,37 @@ def delete_order(id):
 
     else:
         abort(422, 'Order was not deleted')
+
+
+
+
+
+@app.errorhandler(AuthError)
+def handle_auth_error(ex):
+    response = jsonify(ex.error)
+    response.status_code = ex.status_code
+    return response
+
+@app.errorhandler(400)
+def bad_request(error):
+    return jsonify({
+        'success': False,
+        'error': 400,
+        'message': 'bad request'
+    })
+
+@app.errorhandler(404)
+def not_found(error):
+    return jsonify({
+        'success': False,
+        'error': 404,
+        'message': 'resource not found'
+    })
+
+@app.errorhandler(422)
+def unprocessable(error):
+    return jsonify({
+        "success": False,
+        "error": 422,
+        "message": "unprocessable"
+    }), 422
