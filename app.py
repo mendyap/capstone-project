@@ -1,7 +1,7 @@
 from flask import Flask, jsonify, request
 from models import app, db, Customer, Item, Orders
 from datetime import date
-
+from auth import AuthError, requires_auth
 
 @app.route('/<int:id>')
 def index(id):
@@ -15,6 +15,7 @@ def index(id):
 
 
 @app.route('/customers')
+@requires_auth('get:customers')
 def get_customers():
     customers = Customer.query.all()
 
@@ -30,6 +31,7 @@ def get_customers():
 
 
 @app.route('/new_customer', methods=['POST'])
+@requires_auth('post:customer')
 def create_customer():
 
     data = request.get_json()

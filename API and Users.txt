@@ -1,0 +1,13 @@
+
+https://mapfdev.us.auth0.com/authorize?audience=warehouse-api&response_type=token&client_id=e4IYUqpnwQ16cg2YUxnj87L6rZqzlrEz&redirect_uri=https://127.0.0.1:8080/login-results
+
+Password for all users: Password123
+
+Users:
+
+Manager - manager@warehouse.com
+
+Inventory Manager - inventory@warehouse.com
+
+Sales - sales@warehouse.com
+

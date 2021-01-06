@@ -1,1 +1,4 @@
-DATABASE_URL == 'postgres://usihqizerdqsgo:8abd1078bca31bb251f36b3f7d9d1cb2866f5c779a46250f43a256f4302866da@ec2-54-242-120-138.compute-1.amazonaws.com:5432/d49upe729k8d2q'
+export DATABASE_URL=postgres://localhost:5432/capstone_test
+export AUTH0_DOMAIN=mapfdev.us.auth0.com
+export ALGORITHMS=['RS256']
+export API_AUDIENCE=warehouse-api
