@@ -19,7 +19,7 @@ def get_customers():
     customer_list = []
 
     for customer in customers:
-        customer_list.append(customer.name)
+        customer_list.append([customer.name, customer.email])
 
     return jsonify({
         'success': True,
@@ -94,4 +94,73 @@ def delete_customer(id):
     })
 
 
+# ITEM ENDPOINTS
+
+@app.route('/new_item', methods=['POST'])
+def create_item():
+
+    data = request.get_json()
+
+    if not data['name'] or not data['brand']:
+        abort(404)
+
+    item = Item(name=data['name'],
+                        email=data['brand'], price=data['price'])
+
+    db.session.add(item)
+    db.session.commit()
+
+    new_item = Item.query.filter(name=data['name']).one_or_none()
+
+    return jsonify({
+        'success': True,
+        'Item': new_item.name
+    })
+
+
+@app.route('/update_item/<int:id>', methods=['PATCH'])
+def update_item(id):
+    data = request.get_json()
+
+    item = Item.query.filter_by(id=id).one_or_none()
+
+    if not data['name'] and not data['brand'] and not data['price']:
+        abort(404)
+
+    if data['name']:
+        item.name = data['name']
+
+    if data['brand']:
+        item.brand = data['brand']
+    
+    if data['brand']:
+        item.price = data['price']
+
+        db.session.commit()
+
+        updated_item = Item.query.filter_by(id=id).one_or_none()
+
+    return jsonify({
+        'success': True,
+        'item_name': updated_item.name,
+        'item_brand': updated_item.brand,
+        'item_price': updated_item.price
+    })
+
+
+@app.route('/delete_Item/<int:id>', methods=['DELETE'])
+def delete_Item(id):
+    item = Item.query.filter_by(id=id).one_or_none()
+    deleted_name = Item.name
+
+    db.session.delete(item)
+    db.session.commit()
+
+    items = Item.query.all()
+
+    return jsonify({
+        'success': True,
+        'deleted_item': deleted_name,
+        'num_of_remaining_items': len(items)
+    })
 

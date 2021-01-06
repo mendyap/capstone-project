@@ -23,7 +23,7 @@ class Customer(db.Model):
 class Item(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(30), unique=True)
-    brand = db.Column(db.String(30))
+    brand = db.Column(db.String(30), nullable=False)
     price = db.Column(db.Integer)
     available = db.Column(db.Boolean, default=True)
     orders = db.relationship('Orders', cascade='all, delete', backref='item')
