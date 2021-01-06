@@ -1,6 +1,7 @@
 from flask import Flask, jsonify, request
-from models import app, db, Customer, Item
+from models import app, db, Customer, Item, Orders
 from datetime import date
+
 
 @app.route('/<int:id>')
 def index(id):
@@ -11,6 +12,7 @@ def index(id):
         'success': True,
         'customer': customer.name
     })
+
 
 @app.route('/customers')
 def get_customers():
@@ -96,16 +98,31 @@ def delete_customer(id):
 
 # ITEM ENDPOINTS
 
+@app.route('/items')
+def get_items():
+    items = Item.query.all()
+
+    item_list = []
+
+    for item in items:
+        item_list.append([item.name, item.brand, item.price])
+
+    return jsonify({
+        'success': True,
+        'items': item_list
+    })
+
+
 @app.route('/new_item', methods=['POST'])
 def create_item():
 
     data = request.get_json()
 
-    if not data['name'] or not data['brand']:
+    if not data['name'] or not data['brand'] or not data['price']:
         abort(404)
 
     item = Item(name=data['name'],
-                        brand=data['brand'], price=data['price'])
+                brand=data['brand'], price=data['price'])
 
     db.session.add(item)
     db.session.commit()
@@ -132,7 +149,7 @@ def update_item(id):
 
     if data['brand']:
         item.brand = data['brand']
-    
+
     if data['brand']:
         item.price = data['price']
 
@@ -164,3 +181,72 @@ def delete_Item(id):
         'num_of_remaining_items': len(items)
     })
 
+# ORDER endpoints
+
+
+@app.route('/orders')
+def get_orders():
+    orders = Orders.query.all()
+
+    orders_list = []
+
+    for order in orders:
+        orders_list.append([order.order_date,
+                            order.customer.name, order.item.name, order.quantity])
+
+    return jsonify({
+        'success': True,
+        'orders_list': orders_list,
+        'num_of_orders': len(orders)
+    })
+
+
+@app.route('/submit_order', methods=['POST'])
+def submit_order():
+    data = request.get_json()
+
+    item = Item.query.filter_by(id=data['item_id']).one_or_none()
+
+    if item.available == False:
+        abort(422, 'Item not available')
+
+    today = date.today()
+    total_price = item.price * data['quantity']
+    print('TOTAL:', total_price)
+
+    order = Orders(order_date=today, customer_id=data['customer_id'],
+                   item_id=data['item_id'], quantity=data['quantity'], amount_due=total_price)
+
+    db.session.add(order)
+    db.session.commit()
+
+    return ({
+        'success': True
+    })
+
+
+@app.route('/delete_order/<int:id>', methods=['DELETE'])
+def delete_order(id):
+    order = Orders.query.filter_by(id=id).one_or_none()
+
+    orders = Orders.query.all()
+
+    previous_num_of_orders = len(orders)
+
+    db.session.delete(order)
+    db.session.commit()
+
+    current_orders = Orders.query.all()
+
+    current_num_of_orders = len(current_orders)
+
+    if (current_num_of_orders) == (previous_num_of_orders - 1):
+        return jsonify({
+            'success': True,
+            'message': 'order was deleted',
+            'previous_orders': previous_num_of_orders,
+            'current_orders': current_num_of_orders
+        })
+
+    else:
+        abort(422, 'Order was not deleted')

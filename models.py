@@ -34,6 +34,7 @@ class Item(db.Model):
 
 class Orders(db.Model):
     id = db.Column(db.Integer, primary_key=True)
+    order_date = db.Column(db.DateTime)
     customer_id = db.Column(db.Integer, db.ForeignKey('customer.id'))
     item_id = db.Column(db.Integer, db.ForeignKey('item.id'))
     quantity = db.Column(db.Integer)
