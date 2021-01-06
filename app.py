@@ -105,7 +105,7 @@ def create_item():
         abort(404)
 
     item = Item(name=data['name'],
-                        email=data['brand'], price=data['price'])
+                        brand=data['brand'], price=data['price'])
 
     db.session.add(item)
     db.session.commit()
