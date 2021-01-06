@@ -110,7 +110,7 @@ def create_item():
     db.session.add(item)
     db.session.commit()
 
-    new_item = Item.query.filter(name=data['name']).one_or_none()
+    new_item = Item.query.filter_by(name=data['name']).one_or_none()
 
     return jsonify({
         'success': True,
