@@ -56,6 +56,7 @@ def create_customer():
 
 
 @app.route('/update_customer/<int:id>', methods=['PATCH'])
+@requires_auth('patch:customer')
 def update_customer(id):
     data = request.get_json()
 
@@ -82,6 +83,7 @@ def update_customer(id):
 
 
 @app.route('/delete_customer/<int:id>', methods=['DELETE'])
+@requires_auth('delete:customer')
 def delete_customer(id):
     customer = Customer.query.filter_by(id=id).one_or_none()
     deleted_name = customer.name
@@ -101,6 +103,7 @@ def delete_customer(id):
 # ITEM ENDPOINTS
 
 @app.route('/items')
+@requires_auth('get:items')
 def get_items():
     items = Item.query.all()
 
@@ -116,6 +119,7 @@ def get_items():
 
 
 @app.route('/new_item', methods=['POST'])
+@requires_auth('post:item')
 def create_item():
 
     data = request.get_json()
@@ -138,6 +142,7 @@ def create_item():
 
 
 @app.route('/update_item/<int:id>', methods=['PATCH'])
+@requires_auth('patch:item')
 def update_item(id):
     data = request.get_json()
 
@@ -168,6 +173,7 @@ def update_item(id):
 
 
 @app.route('/delete_Item/<int:id>', methods=['DELETE'])
+@requires_auth('delete:item')
 def delete_Item(id):
     item = Item.query.filter_by(id=id).one_or_none()
     deleted_name = Item.name
@@ -187,13 +193,14 @@ def delete_Item(id):
 
 
 @app.route('/orders')
+@requires_auth('get:orders')
 def get_orders():
     orders = Orders.query.all()
 
     orders_list = []
 
     for order in orders:
-        orders_list.append([order.order_date,
+        orders_list.append([order.id, order.order_date,
                             order.customer.name, order.item.name, order.quantity])
 
     return jsonify({
@@ -204,6 +211,7 @@ def get_orders():
 
 
 @app.route('/submit_order', methods=['POST'])
+@requires_auth('post:order')
 def submit_order():
     data = request.get_json()
 
@@ -228,6 +236,7 @@ def submit_order():
 
 
 @app.route('/delete_order/<int:id>', methods=['DELETE'])
+@requires_auth('delete:order')
 def delete_order(id):
     order = Orders.query.filter_by(id=id).one_or_none()
 
