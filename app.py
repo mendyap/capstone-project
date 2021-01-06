@@ -1,5 +1,5 @@
 from flask import Flask, jsonify, request
-from models import app, db, Customer
+from models import app, db, Customer, Item
 from datetime import date
 
 @app.route('/<int:id>')
