@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, abort
 from models import app, db, Customer, Item, Orders
 from datetime import date
 from auth import AuthError, requires_auth
@@ -25,7 +25,7 @@ def get_customers():
     customer_list = []
 
     for customer in customers:
-        customer_list.append([customer.name, customer.email])
+        customer_list.append([customer.id, customer.name, customer.email])
 
     return jsonify({
         'success': True,
@@ -48,8 +48,7 @@ def create_customer():
                         email=data['email'], join_date=today)
 
     try:
-        db.session.add(customer)
-        db.session.commit()
+        customer.insert()
     except Exception as exc:
         db.session.rollback()
         print('Exception:', exc)
@@ -85,7 +84,7 @@ def update_customer(id):
         customer.email = data['email']
 
     try:
-        db.session.commit()
+        customer.update()
     except Exception as exc:
         db.session.rollback()
         print('Exception:', exc)
@@ -110,11 +109,8 @@ def delete_customer(id):
     if customer is None:
         abort(404)
 
-    deleted_name = customer.name
-
     try:
-        db.session.delete(customer)
-        db.session.commit()
+        customer.delete()
     except Exception as exc:
         db.session.rollback()
         print('Exception:', exc)
@@ -124,7 +120,9 @@ def delete_customer(id):
 
     return jsonify({
         'success': True,
-        'deleted_customer': deleted_name,
+        'status_code': 200,
+        'deleted_id': customer.id,
+        'deleted_customer': customer.name,
         'num_of_remaining_customers': len(customers)
     })
 
@@ -164,8 +162,7 @@ def create_item():
                 brand=data['brand'], price=data['price'])
 
     try:
-        db.session.add(item)
-        db.session.commit()
+        item.insert()
     except Exception as exc:
         db.session.rollback()
         print('Exception:', exc)
@@ -199,7 +196,7 @@ def update_item(id):
     if data['brand']:
         item.price = data['price']
     try:
-        db.session.commit()
+        item.update()
     except Exception as exc:
         db.session.rollback()
         print('Exception:', exc)
@@ -226,8 +223,7 @@ def delete_Item(id):
     deleted_name = item.name
 
     try:
-        db.session.delete(item)
-        db.session.commit()
+        item.delete()
     except Exception as exc:
         db.session.rollback()
         print('Exception:', exc)
@@ -285,8 +281,7 @@ def submit_order():
                    item_id=data['item_id'], quantity=data['quantity'], amount_due=total_price)
                    
     try:
-        db.session.add(order)
-        db.session.commit()
+        order.update()
     except Exception as exc:
         db.session.rollback()
         print('Exception:', exc)
@@ -310,8 +305,7 @@ def delete_order(id):
     previous_num_of_orders = len(orders)
 
     try:
-        db.session.delete(order)
-        db.session.commit()
+        order.delete()
     except Exception as exc:
         db.session.rollback()
         print('Exception:', exc)
@@ -330,7 +324,7 @@ def delete_order(id):
         })
 
     else:
-        abort(422, 'Order was not deleted')
+        abort(500, 'Order was not deleted')
 
 
 
@@ -348,7 +342,7 @@ def bad_request(error):
         'success': False,
         'error': 400,
         'message': 'bad request'
-    })
+    }), 400
 
 @app.errorhandler(404)
 def not_found(error):
@@ -356,7 +350,7 @@ def not_found(error):
         'success': False,
         'error': 404,
         'message': 'resource not found'
-    })
+    }), 404
 
 @app.errorhandler(422)
 def unprocessable(error):
@@ -365,3 +359,11 @@ def unprocessable(error):
         "error": 422,
         "message": "unprocessable"
     }), 422
+
+@app.errorhandler(500)
+def server_error(error):
+    return jsonify({
+        "success": False,
+        "error": 500,
+        "message": "internal server error"
+    }), 500
