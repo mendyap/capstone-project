@@ -1,8 +1,9 @@
 from flask import Flask, jsonify, request, abort
-from models import setup_db, Customer, Item, Orders
+from models import setup_db, db, Customer, Item, Orders
 from datetime import date
 from auth import AuthError, requires_auth
 from flask_cors import CORS
+
 
 def create_app(test_config=None):
     # create and configure the app
@@ -29,7 +30,6 @@ def create_app(test_config=None):
             'customers': customer_list
         })
 
-
     @app.route('/new_customer', methods=['POST'])
     @requires_auth('post:customer')
     def create_customer():
@@ -37,7 +37,7 @@ def create_app(test_config=None):
         data = request.get_json()
         today = date.today()
 
-        if (data['name'] is None) or (data['email'] is None):
+        if (data.get('name') is None) or (data.get('email') is None):
             abort(400)
 
         customer = Customer(name=data['name'],
@@ -50,16 +50,17 @@ def create_app(test_config=None):
             print('Exception:', exc)
             abort(422)
 
-        new_customer = Customer.query.filter_by(name=data['name']).one_or_none()
+        new_customer = Customer.query.filter_by(
+            name=data['name']).one_or_none()
         if new_customer is None:
             abort(422)
 
         return jsonify({
             'success': True,
             'status_code': 200,
-            'Customer': new_customer.name
+            'id': customer.id,
+            'customer': customer.name
         })
-
 
     @app.route('/update_customer/<int:id>', methods=['PATCH'])
     @requires_auth('patch:customer')
@@ -70,13 +71,13 @@ def create_app(test_config=None):
         if customer is None:
             abort(404)
 
-        if not data['name'] and not data['email']:
+        if data.get('name') is None and data.get('email') is None:
             abort(400)
 
-        if data['name']:
+        if data.get('name'):
             customer.name = data['name']
 
-        if data['email']:
+        if data.get('email'):
             customer.email = data['email']
 
         try:
@@ -96,7 +97,6 @@ def create_app(test_config=None):
             'customer_name': updated_customer.name,
             'customer_email': updated_customer.email
         })
-
 
     @app.route('/delete_customer/<int:id>', methods=['DELETE'])
     @requires_auth('delete:customer')
@@ -122,7 +122,6 @@ def create_app(test_config=None):
             'num_of_remaining_customers': len(customers)
         })
 
-
     # ITEM ENDPOINTS
 
     @app.route('/items')
@@ -136,7 +135,7 @@ def create_app(test_config=None):
         item_list = []
 
         for item in items:
-            item_list.append([item.name, item.brand, item.price])
+            item_list.append([item.id, item.name, item.brand, item.price])
 
         return jsonify({
             'success': True,
@@ -144,14 +143,13 @@ def create_app(test_config=None):
             'items': item_list
         })
 
-
     @app.route('/new_item', methods=['POST'])
     @requires_auth('post:item')
     def create_item():
 
         data = request.get_json()
 
-        if not data['name'] or not data['brand'] or not data['price']:
+        if data.get('name') is None or data.get('brand') is None or data.get('price') is None:
             abort(400)
 
         item = Item(name=data['name'],
@@ -167,9 +165,9 @@ def create_app(test_config=None):
         return jsonify({
             'success': True,
             'status_code': 200,
-            'Item': data['name']
+            'id': item.id,
+            'item': data['name']
         })
-
 
     @app.route('/update_item/<int:id>', methods=['PATCH'])
     @requires_auth('patch:item')
@@ -180,16 +178,16 @@ def create_app(test_config=None):
         if item is None:
             abort(404)
 
-        if not data['name'] and not data['brand'] and not data['price']:
+        if data.get('name') is None and data.get('brand') is None and data.get('price') is None:
             abort(400)
 
-        if data['name']:
+        if data.get('name'):
             item.name = data['name']
 
-        if data['brand']:
+        if data.get('brand'):
             item.brand = data['brand']
 
-        if data['brand']:
+        if data.get('price'):
             item.price = data['price']
         try:
             item.update()
@@ -208,8 +206,7 @@ def create_app(test_config=None):
             'item_price': updated_item.price
         })
 
-
-    @app.route('/delete_Item/<int:id>', methods=['DELETE'])
+    @app.route('/delete_item/<int:id>', methods=['DELETE'])
     @requires_auth('delete:item')
     def delete_Item(id):
         item = Item.query.filter_by(id=id).one_or_none()
@@ -230,12 +227,12 @@ def create_app(test_config=None):
         return jsonify({
             'success': True,
             'status_code': 200,
+            'deleted_id': id,
             'deleted_item': deleted_name,
             'num_of_remaining_items': len(items)
         })
 
     # ORDER endpoints
-
 
     @app.route('/orders')
     @requires_auth('get:orders')
@@ -257,7 +254,6 @@ def create_app(test_config=None):
             'num_of_orders': len(orders)
         })
 
-
     @app.route('/submit_order', methods=['POST'])
     @requires_auth('post:order')
     def submit_order():
@@ -274,10 +270,10 @@ def create_app(test_config=None):
         total_price = item.price * data['quantity']
 
         order = Orders(order_date=today, customer_id=data['customer_id'],
-                    item_id=data['item_id'], quantity=data['quantity'], amount_due=total_price)
-                    
+                       item_id=data['item_id'], quantity=data['quantity'], amount_due=total_price)
+
         try:
-            order.update()
+            order.insert()
         except Exception as exc:
             db.session.rollback()
             print('Exception:', exc)
@@ -285,9 +281,9 @@ def create_app(test_config=None):
 
         return ({
             'success': True,
-            'status_code': 200 
+            'status_code': 200,
+            'order_id': order.id
         })
-
 
     @app.route('/delete_order/<int:id>', methods=['DELETE'])
     @requires_auth('delete:order')
@@ -314,6 +310,8 @@ def create_app(test_config=None):
         if (current_num_of_orders) == (previous_num_of_orders - 1):
             return jsonify({
                 'success': True,
+                'status_code': 200,
+                'deleted_order_id': id,
                 'message': 'order was deleted',
                 'previous_orders': previous_num_of_orders,
                 'current_orders': current_num_of_orders
@@ -321,10 +319,6 @@ def create_app(test_config=None):
 
         else:
             abort(500, 'Order was not deleted')
-
-
-
-
 
     @app.errorhandler(AuthError)
     def handle_auth_error(ex):
@@ -365,6 +359,7 @@ def create_app(test_config=None):
         }), 500
 
     return app
+
 
 app = create_app()
 
