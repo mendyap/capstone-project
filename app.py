@@ -257,7 +257,7 @@ def create_app(test_config=None):
             abort(404)
         # create empty list to append orders to
         orders_list = []
-        # loop through orders and append them to orders_list
+        '''loop through orders and append them to orders_list (appended data includes data from the Customer and Item tables which was made possible by declaring a relationship between the Orders and Customer and Item tables (see models.py from implementation))'''
         for order in orders:
             orders_list.append([order.id, order.order_date,
                                 order.customer.name, order.item.name, order.quantity])

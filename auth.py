@@ -54,7 +54,7 @@ def check_permissions(permission, payload):
             'code': 'invalid header',
             'decription': 'no permissions in header'
         }, 400)
-    # check that permission matches required permissions for access
+    # check that required permission exists in payload
     if permission not in payload['permissions']:
         raise AuthError({
             'code': 'permission denied',
@@ -129,7 +129,7 @@ def requires_auth(permission=''):
             token = get_token_auth_header()
             # verify token
             payload = verify_decode_jwt(token)
-            # check authorization
+            # check if required permission exists in payload 
             check_permissions(permission, payload)
             # return wrapped function
             return f(*args, **kwargs)
