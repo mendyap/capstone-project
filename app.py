@@ -259,6 +259,9 @@ def create_app(test_config=None):
     def submit_order():
         data = request.get_json()
 
+        if data.get('customer_id') is None or data.get('item_id') is None or data.get('quantity') is None:
+            abort(404)
+
         item = Item.query.filter_by(id=data['item_id']).one_or_none()
         if item is None:
             abort(404)
