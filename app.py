@@ -11,24 +11,26 @@ def create_app(test_config=None):
     setup_db(app)
     CORS(app)
 
-
-    ###CUSTOMER ENDPOINTS
+    # CUSTOMER ENDPOINTS
 
     # get list of customers
+
     @app.route('/customers')
     # add permission decorator
     @requires_auth('get:customers')
     def get_customers():
-        #get all customers in database
+        # get all customers in database
         customers = Customer.query.all()
-        #confirm that there are customers
+        # confirm that there are customers
         if customers is None:
             abort(404)
         # create a list to append customers to
         customer_list = []
         # loop through queried customers and append info to customer_list
         for customer in customers:
-            customer_list.append([customer.id, customer.name, customer.email])
+            customer_list.append(
+                {'id': customer.id, 'name': customer.name,
+                 'email': customer.email})
 
         return jsonify({
             'success': True,
@@ -49,7 +51,8 @@ def create_app(test_config=None):
         # create customer object to insert into database
         customer = Customer(name=data['name'],
                             email=data['email'], join_date=today)
-        # attempt to insert new customer into database using .insert() defined in customer class model(see models.py)
+        # attempt to insert new customer into database using .insert()<br>
+        # defined in customer class model(see models.py)
         try:
             customer.insert()
         # if insert fails rollback data entry
@@ -107,7 +110,7 @@ def create_app(test_config=None):
     @app.route('/delete_customer/<int:id>', methods=['DELETE'])
     @requires_auth('delete:customer')
     def delete_customer(id):
-        # get customer object pending deletion by 'id' 
+        # get customer object pending deletion by 'id'
         customer = Customer.query.filter_by(id=id).one_or_none()
         # verify that customer exists
         if customer is None:
@@ -131,7 +134,7 @@ def create_app(test_config=None):
             'num_of_remaining_customers': len(customers)
         })
 
-    ### ITEM ENDPOINTS
+    # ITEM ENDPOINTS
 
     @app.route('/items')
     @requires_auth('get:items')
@@ -145,7 +148,8 @@ def create_app(test_config=None):
         item_list = []
         # loop through selected items and append info to item_list
         for item in items:
-            item_list.append([item.id, item.name, item.brand, item.price])
+            item_list.append({'id': item.id, 'name': item.name,
+                              'brand': item.brand, 'price': item.price})
 
         return jsonify({
             'success': True,
@@ -158,8 +162,9 @@ def create_app(test_config=None):
     def create_item():
         # get JSON data
         data = request.get_json()
-        # verift that data includes correct fields
-        if data.get('name') is None or data.get('brand') is None or data.get('price') is None:
+        # verify that data includes correct fields
+        if (data.get('name') is None or data.get('brand') is None
+                or data.get('price') is None):
             abort(400)
         # create item to be inserted
         item = Item(name=data['name'],
@@ -190,9 +195,11 @@ def create_app(test_config=None):
         if item is None:
             abort(404)
         # verify that update data includes correct data
-        if data.get('name') is None and data.get('brand') is None and data.get('price') is None:
+        if (data.get('name') is None and data.get('brand') is None
+                and data.get('price') is None):
             abort(400)
-        # check what fields are to be updated and assign updated fields to item object
+        # check what fields are to be updated and assign updated fields<br>
+        # to item object
         if data.get('name'):
             item.name = data['name']
 
@@ -245,7 +252,7 @@ def create_app(test_config=None):
             'num_of_remaining_items': len(items)
         })
 
-    ## ORDER endpoints
+    # ORDER endpoints
 
     @app.route('/orders')
     @requires_auth('get:orders')
@@ -257,10 +264,16 @@ def create_app(test_config=None):
             abort(404)
         # create empty list to append orders to
         orders_list = []
-        '''loop through orders and append them to orders_list (appended data includes data from the Customer and Item tables which was made possible by declaring a relationship between the Orders and Customer and Item tables (see models.py from implementation))'''
+        '''loop through orders and append them to orders_list (appended
+        data includes data from the Customer and Item tables which was made
+        possible by declaring a relationship between the Orders and Customer
+        and Item tables (see models.py from implementation))'''
         for order in orders:
-            orders_list.append([order.id, order.order_date,
-                                order.customer.name, order.item.name, order.quantity])
+            orders_list.append({'id': order.id,
+                                'order_date': order.order_date,
+                                'customer_name': order.customer.name,
+                                'item_name': order.item.name,
+                                'quantity': order.quantity})
 
         return jsonify({
             'success': True,
@@ -275,23 +288,26 @@ def create_app(test_config=None):
         # get request JSON data
         data = request.get_json()
         # verify that data contains the correct info
-        if data.get('customer_id') is None or data.get('item_id') is None or data.get('quantity') is None:
+        if (data.get('customer_id') is None or data.get('item_id') is None
+                or data.get('quantity') is None):
             abort(404)
         # select item to be added to order
         item = Item.query.filter_by(id=data['item_id']).one_or_none()
         if item is None:
             abort(404)
         # verify that item is available
-        if item.available == False:
+        if item.available is False:
             abort(422, 'item not available')
         # get todays date
         today = date.today()
-        # calculate total price of order based upon item price and quantity of order
+        # calculate total price of order based upon item price<br>
+        # and quantity of order
         total_price = item.price * data['quantity']
         # create orders object
         order = Orders(order_date=today, customer_id=data['customer_id'],
-                       item_id=data['item_id'], quantity=data['quantity'], amount_due=total_price)
-        # attempt to insert order into database with .insert() (see modles.py)
+                       item_id=data['item_id'], quantity=data['quantity'],
+                       amount_due=total_price)
+        # attempt to insert order into database with .insert() (see models.py)
         try:
             order.insert()
         except Exception as exc:
@@ -338,11 +354,11 @@ def create_app(test_config=None):
 
         else:
             abort(500, 'Order was not deleted')
-    
 
-    ### ERROR HANDLERS
+    # ERROR HANDLERS
 
-    #error handler for auth0
+    # error handler for auth0
+
     @app.errorhandler(AuthError)
     def handle_auth_error(ex):
         response = jsonify(ex.error)

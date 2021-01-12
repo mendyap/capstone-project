@@ -6,9 +6,7 @@ from flask_sqlalchemy import SQLAlchemy
 from app import create_app
 from models import setup_db, Customer, Item, Orders
 
-## User JWT's. See README for each users permissions
-
-
+# User JWT's. See README for each users permissions
 manager_jwt = {
     'Content-Type': 'application/json',
     'Authorization': os.environ['MANAGER_TOKEN']
@@ -57,8 +55,10 @@ class WarehouseAppTestCase(unittest.TestCase):
 
     def tearDown(self):
         pass
-    
-    ''' NOTE: All data that is added to the database during testing is deleted by the end of each test unit in order to not interfere with future tests'''
+
+    ''' NOTE: All data that is added to the database during testing is<br>
+    deleted by the end of each test unit in order to not interfere with<br>
+    future tests'''
     def test_get_customers(self):
         res = self.client().get('/customers', headers=manager_jwt)
         data = json.loads(res.data)
@@ -68,7 +68,8 @@ class WarehouseAppTestCase(unittest.TestCase):
         self.assertTrue(len(data['customers']))
 
     def test_post_customer(self):
-        res = self.client().post('/new_customer', headers=manager_jwt, json=self.new_customer)
+        res = self.client().post('/new_customer', headers=manager_jwt,
+                                 json=self.new_customer)
         data = json.loads(res.data)
 
         self.assertEqual(res.status_code, 200)
@@ -86,9 +87,11 @@ class WarehouseAppTestCase(unittest.TestCase):
             name=self.new_customer['name'], email=self.new_customer['email'])
         # insert customer to database
         customer.insert()
-        # send request to update customer that has been just entered into database
+        # send request to update customer that was just<br>
+        # entered into database
         res = self.client().patch('/update_customer/{}'.format(customer.id),
-                                  headers=manager_jwt, json={'name': 'updated name'})
+                                  headers=manager_jwt,
+                                  json={'name': 'updated name'})
         data = json.loads(res.data)
 
         self.assertEqual(res.status_code, 200)
@@ -113,7 +116,8 @@ class WarehouseAppTestCase(unittest.TestCase):
         self.assertEqual(res.status_code, 200)
         self.assertTrue(data['success'])
         self.assertEqual(data['deleted_id'], customer.id)
-        # verify that number of customer is one customer less than what it was prior to deletion
+        # verify that number of customer is one customer less<br>
+        # than what it was prior to deletion
         self.assertEqual(data['num_of_remaining_customers'],
                          (num_of_current_customers - 1))
 
@@ -126,7 +130,8 @@ class WarehouseAppTestCase(unittest.TestCase):
         self.assertTrue(len(data['items']))
 
     def test_post_item(self):
-        res = self.client().post('/new_item', headers=manager_jwt, json=self.new_item)
+        res = self.client().post('/new_item', headers=manager_jwt,
+                                 json=self.new_item)
         data = json.loads(res.data)
 
         self.assertEqual(res.status_code, 200)
@@ -141,11 +146,14 @@ class WarehouseAppTestCase(unittest.TestCase):
     def test_update_item(self):
         # create and insert item to be updated
         item = Item(
-            name=self.new_item['name'], brand=self.new_item['brand'], price=self.new_item['price'])
+            name=self.new_item['name'],
+            brand=self.new_item['brand'],
+            price=self.new_item['price'])
         item.insert()
         # send request to update item
         res = self.client().patch('/update_item/{}'.format(item.id),
-                                  headers=manager_jwt, json={'name': 'updated item'})
+                                  headers=manager_jwt,
+                                  json={'name': 'updated item'})
         data = json.loads(res.data)
 
         self.assertEqual(res.status_code, 200)
@@ -158,12 +166,15 @@ class WarehouseAppTestCase(unittest.TestCase):
     def test_delete_item(self):
         # create and enter item to be deleted
         item = Item(
-            name=self.new_item['name'], brand=self.new_item['brand'], price=self.new_item['price'])
+            name=self.new_item['name'],
+            brand=self.new_item['brand'],
+            price=self.new_item['price'])
         item.insert()
         # get total of items prior to deletion
         num_of_current_items = len(Item.query.all())
         # send request to delete item
-        res = self.client().delete('/delete_item/{}'.format(item.id), headers=manager_jwt)
+        res = self.client().delete('/delete_item/{}'.format(item.id),
+                                   headers=manager_jwt)
         data = json.loads(res.data)
 
         self.assertEqual(res.status_code, 200)
@@ -189,19 +200,26 @@ class WarehouseAppTestCase(unittest.TestCase):
         customer.insert()
         # create an item to be inserted into database
         item = Item(
-            name=self.new_item['name'], brand=self.new_item['brand'], price=self.new_item['price'])
+            name=self.new_item['name'],
+            brand=self.new_item['brand'],
+            price=self.new_item['price'])
         item.insert()
         '''
-        assign the created customer and item id's to the created order. The created customer and order were implemented to esure that the tests are self sufficient in order to provide a predictable outcome and confirm that the units being tested do exist.
+        assign the created customer and item id's to the created order.<br>
+        The created customer and order were implemented to esure that<br>
+        the tests are self sufficient in order to provide a<br>
+        predictable outcome and confirm that the units being tested do exist.
         '''
         res = self.client().post('/submit_order', headers=manager_jwt,
-                                 json={'customer_id': customer.id, 'item_id': item.id, 'quantity': 10})
+                                 json={'customer_id': customer.id,
+                                       'item_id': item.id,
+                                       'quantity': 10})
         data = json.loads(res.data)
 
         self.assertEqual(res.status_code, 200)
         self.assertTrue(data['success'])
         self.assertTrue(data['order_id'])
-    
+
         order = Orders.query.filter_by(id=data['order_id']).one_or_none()
         # after tests are passed delete all mock data(order, customer, item)
         order.delete()
@@ -209,13 +227,16 @@ class WarehouseAppTestCase(unittest.TestCase):
         item.delete()
 
     def test_delete_order(self):
-        # create customer, item and order and insert into database pending deletion request
+        # create customer, item and order and insert into<br>
+        # database pending deletion request
         customer = Customer(
             name=self.new_customer['name'], email=self.new_customer['email'])
         customer.insert()
 
         item = Item(
-            name=self.new_item['name'], brand=self.new_item['brand'], price=self.new_item['price'])
+            name=self.new_item['name'],
+            brand=self.new_item['brand'],
+            price=self.new_item['price'])
         item.insert()
 
         order = Orders(customer_id=customer.id, item_id=item.id, quantity=10)
@@ -223,7 +244,8 @@ class WarehouseAppTestCase(unittest.TestCase):
         # assign order id to variable prior to deletion for testing purposes
         order_id = order.id
         # delete order that was currently created
-        res = self.client().delete('/delete_order/{}'.format(order.id), headers=manager_jwt)
+        res = self.client().delete('/delete_order/{}'.format(order.id),
+                                   headers=manager_jwt)
         data = json.loads(res.data)
 
         self.assertEqual(res.status_code, 200)
@@ -238,7 +260,8 @@ class WarehouseAppTestCase(unittest.TestCase):
 
     # TEST error handlers
 
-    # test failure of post('/new_customer') endpoint if sufficient data is not provided
+    # test failure of post('/new_customer') endpoint if<br>
+    # sufficient data is not provided
     def test_400_post_customer_without_sufficient_data(self):
         res = self.client().post('/new_customer', headers=manager_jwt,
                                  json={"name": "test_post"})
@@ -247,18 +270,21 @@ class WarehouseAppTestCase(unittest.TestCase):
         self.assertEqual(res.status_code, 400)
         self.assertFalse(data['success'])
 
-
     def test_404_update_non_existent_customer(self):
         '''
-        insert mock customer, assign mock customer's id to variable and then delete mock customer prior to the test to ensure that customer pending update does not exist
+        insert mock customer, assign mock customer's id to variable and<br>
+        then delete mock customer prior to the test to ensure that<br>
+        customer pending update does not exist
         '''
         mock_customer = Customer(name='test_name', email='test_email')
         mock_customer.insert()
         nonexistent_customer_id = mock_customer.id
         mock_customer.delete()
         # send request to update nonexistent customer
-        res = self.client().patch('/update_customer/{}'.format(nonexistent_customer_id),
-                                  headers=manager_jwt, json={'name': 'updated name'})
+        res = self.client().patch('/update_customer/{}'.format(
+            nonexistent_customer_id),
+            headers=manager_jwt,
+            json={'name': 'updated name'})
         data = json.loads(res.data)
 
         self.assertEqual(res.status_code, 404)
@@ -266,7 +292,9 @@ class WarehouseAppTestCase(unittest.TestCase):
 
     def test_404_delete_non_existent_customer(self):
         '''
-        insert mock customer, assign mock customer's id to variable and then delete mock customer prior to the test to ensure that customer pending delete does not exist
+        insert mock customer, assign mock customer's id to variable and<br>
+        then delete mock customer prior to the test to ensure that<br>
+        customer pending delete does not exist
         '''
         mock_customer = Customer(name='test_name', email='test_email')
         mock_customer.insert()
@@ -274,13 +302,15 @@ class WarehouseAppTestCase(unittest.TestCase):
         mock_customer.delete()
         # send request to delete nonexistent customer
         res = self.client().delete(
-            '/delete_customer/{}'.format(nonexistent_customer_id), headers=manager_jwt)
+            '/delete_customer/{}'.format(nonexistent_customer_id),
+            headers=manager_jwt)
         data = json.loads(res.data)
 
         self.assertEqual(res.status_code, 404)
         self.assertFalse(data['success'])
 
-    # test failure of post('/new_item') endpoint if sufficient data is not provided
+    # test failure of post('/new_item') endpoint if<br>
+    # sufficient data is not provided
     def test_400_post_item_without_sufficient_data(self):
         res = self.client().post('/new_item', headers=manager_jwt,
                                  json={"name": "test_post"})
@@ -291,15 +321,19 @@ class WarehouseAppTestCase(unittest.TestCase):
 
     def test_404_update_non_existent_item(self):
         '''
-        insert mock item, assign mock item's id to variable and then delete mock item prior to the test to ensure that item pending update does not exist
+        insert mock item, assign mock item's id to variable and<br>
+        then delete mock item prior to the test to ensure that<br>
+        item pending update does not exist
         '''
         mock_item = Item(name='test_name', brand='test_brand', price=10)
         mock_item.insert()
         nonexistent_item_id = mock_item.id
         mock_item.delete()
         # send request to update non existent item
-        res = self.client().patch('/update_item/{}'.format(nonexistent_item_id),
-                                  headers=manager_jwt, json={'name': 'updated name'})
+        res = self.client().patch('/update_item/{}'.format(
+            nonexistent_item_id),
+            headers=manager_jwt,
+            json={'name': 'updated name'})
         data = json.loads(res.data)
 
         self.assertEqual(res.status_code, 404)
@@ -307,7 +341,9 @@ class WarehouseAppTestCase(unittest.TestCase):
 
     def test_404_delete_non_existent_item(self):
         '''
-        insert mock item, assign mock item's id to variable and then delete mock item prior to the test to ensure that item pending delete does not exist
+        insert mock item, assign mock item's id to variable and<br>
+        then delete mock item prior to the test to ensure that<br>
+        item pending delete does not exist
         '''
         mock_item = Item(name='test_name', brand='test_brand', price=10)
         mock_item.insert()
@@ -321,10 +357,12 @@ class WarehouseAppTestCase(unittest.TestCase):
         self.assertEqual(res.status_code, 404)
         self.assertFalse(data['success'])
 
-    # test failure of post('/submit_order') endpoint if sufficient data is not provided
+    # test failure of post('/submit_order') endpoint if<br>
+    # sufficient data is not provided
     def test_404_submit_order_without_sufficient_data(self):
         res = self.client().post('/submit_order', headers=manager_jwt,
-                                 json={"customer_id": "test_customer_id", "item_id": "test_item_id"})
+                                 json={"customer_id": "test_customer_id",
+                                       "item_id": "test_item_id"})
         data = json.loads(res.data)
 
         self.assertEqual(res.status_code, 404)
@@ -335,12 +373,17 @@ class WarehouseAppTestCase(unittest.TestCase):
         customer = Customer(name='test_name', email='test_email')
         # create and insert item that is unavailable to be included in order
         unavailable_item = Item(
-            name='unavailable item', brand='unavailable brand', price=100, available=False)
+            name='unavailable item',
+            brand='unavailable brand',
+            price=100,
+            available=False)
         customer.insert()
         unavailable_item.insert()
         # attempt to submit order with unavailable item
         res = self.client().post('/submit_order', headers=manager_jwt,
-                                 json={"customer_id": customer.id, "item_id": unavailable_item.id, 'quantity': 5})
+                                 json={'customer_id': customer.id,
+                                       'item_id': unavailable_item.id,
+                                       'quantity': 5})
         data = json.loads(res.data)
 
         self.assertEqual(res.status_code, 422)
@@ -353,7 +396,9 @@ class WarehouseAppTestCase(unittest.TestCase):
     def test_404_delete_nonexistent_order(self):
         '''
         create and insert customer and item to be included in mock order.
-        insert mock order, assign mock order's id to variable and then delete mock order prior to the test to ensure that order pending delete does not exist
+        insert mock order, assign mock order's id to variable<br>
+        and then delete mock order prior to the test to ensure<br>
+        that order pending delete does not exist
         '''
         customer = Customer(name='test_name', email='test_email')
         item = Item(name='test_name', brand='test_brand', price=1)
@@ -369,15 +414,18 @@ class WarehouseAppTestCase(unittest.TestCase):
         item.delete()
         # attempt to delete nonexistent order
         res = self.client().delete(
-            '/delete_order/{}'.format(nonexistent_order_id), headers=manager_jwt)
+            '/delete_order/{}'.format(nonexistent_order_id),
+            headers=manager_jwt)
         data = json.loads(res.data)
 
         self.assertEqual(res.status_code, 404)
         self.assertFalse(data['success'])
-    
-    #test authentication and authorization(RBAC)
 
-    ''' NOTE: Warehouse Manager has access to all endpoints. The warehouse manager jwt has been utilized for all tested endpoints up to this point'''
+    # test authentication and authorization(RBAC)
+
+    ''' NOTE: Warehouse Manager has access to all endpoints. The<br>
+    warehouse manager jwt has been utilized for<br>
+    all tested endpoints up to this point'''
 
     # test access endpoint without authorization header
     def test_401_access_endpoint_without_authentication(self):
@@ -387,8 +435,7 @@ class WarehouseAppTestCase(unittest.TestCase):
         self.assertEqual(res.status_code, 401)
         self.assertEqual(data['code'], 'authorization header missing')
 
-
-    ## Test Inventory Manager role permissions
+    # Test Inventory Manager role permissions
 
     # Test inventory manager role's successfull endpoint access
     def test_inventory_manager_get_items(self):
@@ -398,16 +445,20 @@ class WarehouseAppTestCase(unittest.TestCase):
         self.assertEqual(res.status_code, 200)
         self.assertTrue(['success'])
         self.assertTrue(len(data['items']))
-    
-    # Test inventory manager role's failure to access endpoint due to lack of appropriate authorization
+
+    # Test inventory manager role's failure to access endpoint due to<br>
+    # lack of appropriate authorization
     def test_401_inventory_manager_accessing_post_customer_endpoint(self):
-        res = self.client().post('/new_customer', headers=inventory_manager_jwt, json=self.new_customer)
+        res = self.client().post('/new_customer',
+                                 headers=inventory_manager_jwt,
+                                 json=self.new_customer)
         data = json.loads(res.data)
 
         self.assertEqual(res.status_code, 401)
-        self.assertEqual(data['description'], 'user lacks appropriate permission')
+        self.assertEqual(data['description'],
+                         'user lacks appropriate permission')
 
-    ## Test Salesperson role permissions
+    # Test Salesperson role permissions
 
     # Test salesperson role's successfull endpoint access
     def test_salesperson_get_customers(self):
@@ -418,13 +469,17 @@ class WarehouseAppTestCase(unittest.TestCase):
         self.assertTrue(['success'])
         self.assertTrue(len(data['items']))
 
-    # Test inventory manager role's failure to access endpoint due to lack of appropriate authorization
+    # Test inventory manager role's failure to access endpoint due<br>
+    # to lack of appropriate authorization
     def test_401_salesperson_accessing_post_item_endpoint(self):
-        res = self.client().post('/new_item', headers=salesperson_jwt, json=self.new_item)
+        res = self.client().post('/new_item',
+                                 headers=salesperson_jwt,
+                                 json=self.new_item)
         data = json.loads(res.data)
 
         self.assertEqual(res.status_code, 401)
-        self.assertEqual(data['description'], 'user lacks appropriate permission')    
+        self.assertEqual(data['description'],
+                         'user lacks appropriate permission')
 
 
 if __name__ == "__main__":

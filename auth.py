@@ -129,7 +129,7 @@ def requires_auth(permission=''):
             token = get_token_auth_header()
             # verify token
             payload = verify_decode_jwt(token)
-            # check if required permission exists in payload 
+            # check if required permission exists in payload
             check_permissions(permission, payload)
             # return wrapped function
             return f(*args, **kwargs)

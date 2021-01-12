@@ -7,7 +7,24 @@ Users:
 
 Manager - manager@warehouse.com
 
+Manager permissions:
+
+All endpoints
+
 Inventory Manager - inventory@warehouse.com
+
+Inventory Manager permissions:
+
+delete:item
+get:items
+get:orders
+patch:item
+post:item
 
 Sales - sales@warehouse.com
 
+get:customers
+get:items
+get:orders
+post:customer
+post:order
