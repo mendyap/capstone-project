@@ -1,3 +1,6 @@
 .env_file
 environments.txt
 env/
+api_and_users.txt
+Dockerfile
+.vscode
